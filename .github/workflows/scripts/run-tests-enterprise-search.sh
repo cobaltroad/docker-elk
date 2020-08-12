@@ -16,14 +16,16 @@ cid_en="$(container_id enterprise-search)"
 ip_es="$(service_ip elasticsearch)"
 ip_en="$(service_ip enterprise-search)"
 
+es_ca_cert="$(realpath $(dirname ${BASH_SOURCE[0]})/../../../tls/kibana/elasticsearch-ca.pem)"
+
 log 'Waiting for readiness of Elasticsearch'
-poll_ready "$cid_es" "http://${ip_es}:9200/" 'elastic:testpasswd'
+poll_ready "$cid_es" "https://${ip_es}:9200/" --cacert "$es_ca_cert" -u 'elastic:testpasswd'
 
 log 'Waiting for readiness of Enterprise Search'
 poll_ready "$cid_en" "http://${ip_en}:3002/api/ent/v1/internal/health" 'elastic:testpasswd'
 
 log 'Retrieving private key from Elasticsearch'
-response="$(curl "http://${ip_es}:9200/.ent-search-actastic-app_search_api_tokens_v2/_search?q=name:private-key" -s -u elastic:testpasswd)"
+response="$(curl "https://${ip_es}:9200/.ent-search-actastic-app_search_api_tokens_v2/_search?q=name:private-key" -s --cacert "$es_ca_cert" -u elastic:testpasswd)"
 hits="$(jq -rn --argjson data "${response}" '$data.hits.hits')"
 echo "$hits"
 count="$(jq -rn --argjson data "${response}" '$data.hits.total.value')"

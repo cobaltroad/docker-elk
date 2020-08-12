@@ -20,14 +20,16 @@ ip_es="$(service_ip elasticsearch)"
 ip_ls="$(service_ip logstash)"
 ip_kb="$(service_ip kibana)"
 
+es_ca_cert="$(realpath $(dirname ${BASH_SOURCE[0]})/../../../tls/kibana/elasticsearch-ca.pem)"
+
 log 'Waiting for readiness of Elasticsearch'
-poll_ready "$cid_es" "http://${ip_es}:9200/" 'elastic:testpasswd'
+poll_ready "$cid_es" "https://${ip_es}:9200/" --cacert "$es_ca_cert" -u 'elastic:testpasswd'
 
 log 'Waiting for readiness of Logstash'
 poll_ready "$cid_ls" "http://${ip_ls}:9600/_node/pipelines/main?pretty"
 
 log 'Waiting for readiness of Kibana'
-poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" 'kibana_system:testpasswd'
+poll_ready "$cid_kb" "http://${ip_kb}:5601/api/status" -u 'kibana_system:testpasswd'
 
 log 'Creating Logstash index pattern in Kibana'
 source .env
@@ -51,11 +53,11 @@ log 'Sending message to Logstash TCP input'
 echo 'dockerelk' | nc -q0 "$ip_ls" 5000
 
 sleep 1
-curl -X POST "http://${ip_es}:9200/_refresh" -u elastic:testpasswd \
-	-s -w '\n'
+curl -X POST "https://${ip_es}:9200/_refresh" -u elastic:testpasswd \
+	-s -w '\n' --cacert "$es_ca_cert"
 
 log 'Searching message in Elasticsearch'
-response="$(curl "http://${ip_es}:9200/_count?q=message:dockerelk&pretty" -s -u elastic:testpasswd)"
+response="$(curl "https://${ip_es}:9200/_count?q=message:dockerelk&pretty" -s --cacert "$es_ca_cert" -u elastic:testpasswd)"
 echo "$response"
 count="$(jq -rn --argjson data "${response}" '$data.count')"
 if [[ $count -ne 1 ]]; then
