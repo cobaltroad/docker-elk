@@ -54,5 +54,5 @@ agents][apm-agents].
 [Running APM Server on Docker][apm-docker]
 
 
-[apm-agents]: https://www.elastic.co/guide/en/apm/get-started/current/agents.html
-[apm-docker]: https://www.elastic.co/guide/en/apm/server/current/running-on-docker.html
+[apm-agents]: https://www.elastic.co/guide/en/apm/get-started/7.9/agents.html
+[apm-docker]: https://www.elastic.co/guide/en/apm/server/7.9/running-on-docker.html
